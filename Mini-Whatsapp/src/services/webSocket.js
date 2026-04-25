@@ -13,9 +13,21 @@ function appendUsername(url, username) {
   return `${url}${separator}username=${encodeURIComponent(username)}`
 }
 
+function normalizeSockJsUrl(url) {
+  if (url.startsWith('wss://')) {
+    return `https://${url.slice('wss://'.length)}`
+  }
+
+  if (url.startsWith('ws://')) {
+    return `http://${url.slice('ws://'.length)}`
+  }
+
+  return url
+}
+
 function getSocketUrl(username) {
   if (import.meta.env.VITE_WS_URL) {
-    return appendUsername(import.meta.env.VITE_WS_URL, username)
+    return appendUsername(normalizeSockJsUrl(import.meta.env.VITE_WS_URL), username)
   }
 
   if (import.meta.env.DEV) {
