@@ -17,11 +17,23 @@ export function ChatSidebar({
 }) {
   const [searchValue, setSearchValue] = useState('')
   const [showAvailableUsers, setShowAvailableUsers] = useState(false)
+  const normalizedSearchValue = searchValue.trim().toLowerCase()
+  const filteredUsers = normalizedSearchValue
+    ? users.filter((chatUser) => chatUser.name.toLowerCase().includes(normalizedSearchValue))
+    : users
 
   function handleSubmit(event) {
     event.preventDefault()
-    onStartChat(searchValue)
-    setSearchValue('')
+    if (!normalizedSearchValue) {
+      return
+    }
+
+    const matchedUser = users.find((chatUser) => chatUser.name.trim().toLowerCase() === normalizedSearchValue)
+
+    if (matchedUser) {
+      onStartChat(matchedUser.name)
+      setSearchValue('')
+    }
   }
 
   function handleAvailableUserClick(userId) {
@@ -131,8 +143,8 @@ export function ChatSidebar({
           </span>
         </button>
 
-        {users.length > 0 ? (
-          users.map((chatUser) => (
+        {filteredUsers.length > 0 ? (
+          filteredUsers.map((chatUser) => (
             <button
               className={`chat-item ${activeChatType === 'private' && chatUser.id === activeUserId ? 'active' : ''}`}
               key={chatUser.id}
@@ -155,8 +167,12 @@ export function ChatSidebar({
           ))
         ) : (
           <div className="empty-chat-list">
-            <strong>No chats yet</strong>
-            <small>Enter a username above or wait for someone to message you.</small>
+            <strong>{normalizedSearchValue ? 'No matching users' : 'No chats yet'}</strong>
+            <small>
+              {normalizedSearchValue
+                ? 'Only users returned by the backend can appear here.'
+                : 'Wait for backend users to appear, then search or select them here.'}
+            </small>
           </div>
         )}
       </div>

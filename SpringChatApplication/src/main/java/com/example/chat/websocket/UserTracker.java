@@ -1,4 +1,4 @@
-package com.example.chat.SpringChatApplication.websocket;
+package com.example.chat.websocket;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -29,6 +29,6 @@ public class UserTracker {
         return onlineUsers;
     }
     private void broadcast() {
-        messagingTemplate.convertAndSend("/topic/users", onlineUsers);
+        messagingTemplate.convertAndSend("/forAll/users", onlineUsers);
     }
 }

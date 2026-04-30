@@ -9,18 +9,6 @@ function AppRoutes() {
   const [liveUsers, setLiveUsers] = useState([])
   const navigate = useNavigate()
 
-  function registerLiveUser(nextUser) {
-    if (!nextUser?.name) {
-      return
-    }
-
-    setLiveUsers((currentUsers) => (
-      currentUsers.some((currentUser) => currentUser.name === nextUser.name)
-        ? currentUsers
-        : [...currentUsers, nextUser]
-    ))
-  }
-
   function replaceLiveUsers(nextUsers) {
     setLiveUsers(nextUsers)
   }
@@ -33,7 +21,6 @@ function AppRoutes() {
           <NameEntry
             onSubmit={(newUser) => {
               setUser(newUser)
-              registerLiveUser(newUser)
               navigate('/chat')
             }}
           />
@@ -48,7 +35,6 @@ function AppRoutes() {
               <Chat
                 user={user}
                 liveUsers={liveUsers}
-                onRegisterLiveUser={registerLiveUser}
                 onReplaceLiveUsers={replaceLiveUsers}
               />
             )

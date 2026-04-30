@@ -1,4 +1,4 @@
-package com.example.chat.SpringChatApplication.websocket;
+package com.example.chat.websocket;
 
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.web.socket.WebSocketHandler;
@@ -18,7 +18,6 @@ public class CustomHandshakeHandler extends DefaultHandshakeHandler {
 
         String username = (String) attributes.get("username");
 
-        // 🔥 IMPORTANT FIX
         if (username == null || username.isEmpty()) {
             username = "guest_" + UUID.randomUUID();
         }

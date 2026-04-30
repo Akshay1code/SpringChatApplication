@@ -1,4 +1,4 @@
-package com.example.chat.SpringChatApplication.websocket;
+package com.example.chat.websocket;
 
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
@@ -10,7 +10,6 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 public class WebSocketEventListener {
 
     private final UserTracker userTracker;
-
     public WebSocketEventListener(UserTracker userTracker) {
         this.userTracker = userTracker;
     }
@@ -29,7 +28,6 @@ public class WebSocketEventListener {
     @EventListener
     public void handleDisconnect(SessionDisconnectEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-
         if (accessor.getUser() != null) {
             String username = accessor.getUser().getName();
             System.out.println("Disconnected: " + username);

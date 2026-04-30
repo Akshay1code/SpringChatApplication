@@ -1,4 +1,4 @@
-package com.example.chat.SpringChatApplication.websocket;
+package com.example.chat.websocket;
 
 import org.springframework.http.server.*;
 import org.springframework.web.socket.*;
@@ -8,15 +8,12 @@ import java.net.URI;
 import java.util.Map;
 
 public class UserInterceptor implements HandshakeInterceptor {
-
     @Override
     public boolean beforeHandshake(ServerHttpRequest request,
                                    ServerHttpResponse response,
                                    WebSocketHandler wsHandler,
                                    Map<String, Object> attributes) {
-
         String username = null;
-
         URI uri = request.getURI();
         String query = uri.getQuery();
 

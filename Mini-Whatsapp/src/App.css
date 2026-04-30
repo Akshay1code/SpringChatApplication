@@ -710,6 +710,7 @@ a {
   flex-direction: column;
   gap: 12px;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 24px clamp(16px, 4vw, 52px);
 }
 
@@ -726,6 +727,8 @@ a {
 .message {
   display: grid;
   gap: 5px;
+  min-width: 0;
+  width: fit-content;
   max-width: min(68%, 560px);
 }
 
@@ -738,11 +741,15 @@ a {
 
 .message p {
   margin: 0;
+  max-width: 100%;
   padding: 13px 16px;
   border-radius: 18px;
   font-size: 0.95rem;
   font-weight: 600;
   line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .message time {
@@ -783,31 +790,42 @@ a {
 
 .message-composer {
   position: relative;
+  align-items: flex-end;
   gap: 12px;
   padding: 16px 24px;
   border-top: 1px solid #d1fae5;
   background: rgba(255, 255, 255, 0.82);
 }
 
-.message-composer input {
+.message-composer-input {
   width: 100%;
   min-width: 0;
-  height: 48px;
+  min-height: 48px;
+  max-height: 160px;
   border: 1px solid rgba(34, 197, 94, 0.16);
-  border-radius: 999px;
+  border-radius: 24px;
   outline: 0;
-  padding: 0 18px;
+  padding: 12px 18px;
   color: #14532d;
   background: #f8fffb;
+  resize: none;
+  overflow-y: auto;
+  scrollbar-width: none;
+  line-height: 1.45;
+  font: inherit;
   transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 
-.message-composer input:focus {
+.message-composer-input::-webkit-scrollbar {
+  display: none;
+}
+
+.message-composer-input:focus {
   border-color: #22c55e;
   box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.13);
 }
 
-.message-composer input::placeholder {
+.message-composer-input::placeholder {
   color: #9ca3af;
 }
 
@@ -1334,25 +1352,33 @@ a {
   }
 
   .message {
-    max-width: 92%;
+    max-width: 94%;
   }
 
   .message p {
-    font-size: 0.9rem;
+    font-size: 0.89rem;
   }
 
   .message-composer {
     gap: 8px;
+    padding-inline: 10px;
   }
 
   .composer-icon {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
   }
 
   .send-button {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .message-composer-input {
+    min-height: 42px;
+    max-height: 120px;
+    padding: 10px 13px;
+    font-size: 0.92rem;
   }
 
   .landing-page {
@@ -1439,7 +1465,7 @@ a {
     top: 0;
     left: 0;
     width: min(88vw, 340px);
-    height: 100vh;
+    height: 100dvh;
     border-right: 1px solid #d1fae5;
     box-shadow: 0 28px 60px rgba(20, 83, 45, 0.2);
     transform: translateX(-100%);
@@ -1458,7 +1484,16 @@ a {
 
   .chat-window,
   .chat-sidebar.mobile-drawer {
-    height: 100vh;
+    height: 100dvh;
+  }
+
+  .chat-window {
+    min-height: 100dvh;
+  }
+
+  .window-header {
+    min-height: 68px;
+    padding: 12px 14px;
   }
 
   .window-contact {
@@ -1467,6 +1502,52 @@ a {
 
   .window-contact > span:last-child {
     min-width: 0;
+  }
+
+  .window-contact strong,
+  .window-contact small {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .message-feed {
+    gap: 10px;
+    padding: 14px 12px;
+  }
+
+  .message {
+    max-width: min(88%, 520px);
+  }
+
+  .message p {
+    padding: 12px 14px;
+    font-size: 0.92rem;
+    line-height: 1.42;
+  }
+
+  .message-composer {
+    gap: 10px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .message-composer-input {
+    min-height: 44px;
+    max-height: 132px;
+    padding: 10px 14px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+  }
+
+  .composer-icon,
+  .send-button {
+    flex: 0 0 auto;
+  }
+
+  .send-button {
+    width: 42px;
+    height: 42px;
   }
 
   .empty-window-card .mobile-menu-button {

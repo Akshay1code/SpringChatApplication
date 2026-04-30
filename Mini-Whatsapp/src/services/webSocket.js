@@ -4,6 +4,15 @@ import Stomp from 'stompjs'
 let stompClient = null
 let activeSubscriptions = []
 
+function sendIfConnected(destination, payload = {}) {
+  if (!stompClient || !stompClient.connected) {
+    return false
+  }
+
+  stompClient.send(destination, {}, JSON.stringify(payload))
+  return true
+}
+
 function appendUsername(url, username) {
   if (!username) {
     return url
@@ -18,12 +27,15 @@ function isNativeWebSocketUrl(url) {
 }
 
 function getSocketUrl(username) {
-  if (import.meta.env.VITE_WS_URL) {
-    return appendUsername(import.meta.env.VITE_WS_URL, username)
+  if (import.meta.env.DEV) {
+    return appendUsername(
+      import.meta.env.VITE_WS_URL_DEV || 'http://localhost:8080/ws',
+      username,
+    )
   }
 
-  if (import.meta.env.DEV) {
-    return appendUsername('http://localhost:8080/ws', username)
+  if (import.meta.env.VITE_WS_URL) {
+    return appendUsername(import.meta.env.VITE_WS_URL, username)
   }
 
   return appendUsername(`${window.location.origin}/ws`, username)
@@ -50,13 +62,13 @@ export const connectSocket = (
     activeSubscriptions.forEach((subscription) => subscription.unsubscribe())
     activeSubscriptions = []
 
-    activeSubscriptions.push(stompClient.subscribe('/user/queue/messages', (msg) => {
+    activeSubscriptions.push(stompClient.subscribe('/user/onlyOne/messages', (msg) => {
       const data = JSON.parse(msg.body)
       onMessageReceived(data)
     }))
 
     if (onGroupMessageReceived) {
-      activeSubscriptions.push(stompClient.subscribe('/topic/messages', (msg) => {
+      activeSubscriptions.push(stompClient.subscribe('/forAll/messages', (msg) => {
         const data = JSON.parse(msg.body)
         console.log('BROADCAST:', data)
         onGroupMessageReceived(data)
@@ -64,18 +76,20 @@ export const connectSocket = (
     }
 
     if (onUsersReceived) {
-      activeSubscriptions.push(stompClient.subscribe('/topic/users', (msg) => {
+      activeSubscriptions.push(stompClient.subscribe('/forAll/users', (msg) => {
         const data = JSON.parse(msg.body)
         console.log('ONLINE USERS:', data)
         onUsersReceived(data)
       }))
 
-      stompClient.send('/app/getUsers', {}, {})
+      sendIfConnected('/app/getUsers')
     }
   }, (error) => {
     console.error('Socket connection failed:', error)
   })
 }
+
+export const requestOnlineUsers = () => sendIfConnected('/app/getUsers')
 
 export const sendMessage = (message) => {
   if (!stompClient || !stompClient.connected) {

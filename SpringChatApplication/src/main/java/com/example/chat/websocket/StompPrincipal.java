@@ -1,4 +1,4 @@
-package com.example.chat.SpringChatApplication.websocket;
+package com.example.chat.websocket;
 
 import java.security.Principal;
 

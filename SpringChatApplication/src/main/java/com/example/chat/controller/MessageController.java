@@ -1,7 +1,6 @@
-package com.example.chat.SpringChatApplication.controller;
-
-import com.example.chat.SpringChatApplication.models.ChatMessage;
-import com.example.chat.SpringChatApplication.websocket.UserTracker;
+package com.example.chat.controller;
+import com.example.chat.models.ChatMessage;
+import com.example.chat.websocket.UserTracker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -20,24 +19,25 @@ public class MessageController {
     }
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
-
     @MessageMapping("/private")
     public void sendPrivateMessage(ChatMessage message) {
         System.out.println("MESSAGE RECEIVED: " + message.getContent());
         messagingTemplate.convertAndSendToUser(
                 message.getReceiver(),   // WHO should receive
-                "/queue/messages",       // WHERE to deliver
+                "/onlyOne/messages",       // WHERE to deliver
                 message
         );
     }
+
     @MessageMapping("/broadcast")
-    @SendTo("/topic/messages")
+    @SendTo("/forAll/messages")
     public ChatMessage broadcast(ChatMessage message) {
         System.out.println("Broadcast: " + message.getContent());
         return message;
     }
+
     @MessageMapping("/getUsers")
     public void sendUsers() {
-        messagingTemplate.convertAndSend("/topic/users", userTracker.getOnlineUsers());
+        messagingTemplate.convertAndSend("/forAll/users", userTracker.getOnlineUsers());
     }
 }

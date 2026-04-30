@@ -4,6 +4,7 @@ import { ChatWindow } from '../components/ChatWindow'
 import {
   connectSocket,
   disconnectSocket,
+  requestOnlineUsers,
   sendGroupMessage,
   sendGroupTypingMessage,
   sendMessage,
@@ -71,9 +72,31 @@ function createChatUser(name) {
 }
 
 function normalizeUsersList(userNames, currentUserName) {
+  const sourceUsers = Array.isArray(userNames)
+    ? userNames
+    : Array.isArray(userNames?.users)
+      ? userNames.users
+      : Array.isArray(userNames?.onlineUsers)
+        ? userNames.onlineUsers
+        : []
+
   const uniqueNames = [...new Set(
-    userNames
-      .filter((name) => typeof name === 'string')
+    sourceUsers
+      .map((entry) => {
+        if (typeof entry === 'string') {
+          return entry
+        }
+
+        if (typeof entry?.name === 'string') {
+          return entry.name
+        }
+
+        if (typeof entry?.username === 'string') {
+          return entry.username
+        }
+
+        return ''
+      })
       .map((name) => name.trim())
       .filter(Boolean),
   )]
@@ -138,7 +161,7 @@ function normalizeGroupMessage(message, loggedInUsername) {
   }
 }
 
-function Chat({ user, liveUsers, onRegisterLiveUser, onReplaceLiveUsers }) {
+function Chat({ user, liveUsers, onReplaceLiveUsers }) {
   const currentUser = user ?? {
     name: 'SpringChat User',
     initials: 'SC',
@@ -171,24 +194,10 @@ function Chat({ user, liveUsers, onRegisterLiveUser, onReplaceLiveUsers }) {
     ? formatGroupTypingLabel(groupTypingUsers)
     : activeUser ? typingByUser[activeUser.id] || '' : ''
 
-  function registerLiveUserByName(name) {
-    const trimmedName = name?.trim()
-
-    if (!trimmedName || !onRegisterLiveUser) {
-      return
-    }
-
-    onRegisterLiveUser(createChatUser(trimmedName))
-  }
-
   useEffect(() => {
     activeUserIdRef.current = activeUserId
     activeChatTypeRef.current = activeChatType
   }, [activeChatType, activeUserId])
-
-  useEffect(() => {
-    registerLiveUserByName(currentUser.name)
-  }, [currentUser.name])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 768px)')
@@ -210,6 +219,10 @@ function Chat({ user, liveUsers, onRegisterLiveUser, onReplaceLiveUsers }) {
   }, [])
 
   useEffect(() => {
+    const syncOnlineUsers = () => {
+      requestOnlineUsers()
+    }
+
     connectSocket(
       currentUser.name,
       (socketMessage) => {
@@ -222,7 +235,6 @@ function Chat({ user, liveUsers, onRegisterLiveUser, onReplaceLiveUsers }) {
           const receiverName = socketMessage.receiver || socketMessage.to || currentUser.name
           const conversationName = senderName === currentUser.name ? receiverName : senderName
           const conversationUser = createChatUser(conversationName)
-          registerLiveUserByName(senderName)
 
           setUsers((currentUsers) => {
             if (currentUsers.some((chatUser) => chatUser.id === conversationUser.id)) {
@@ -251,7 +263,6 @@ function Chat({ user, liveUsers, onRegisterLiveUser, onReplaceLiveUsers }) {
         }
 
         const { conversationUser, message } = normalizeIncomingMessage(socketMessage, currentUser.name)
-        registerLiveUserByName(conversationUser.name)
 
         if (incomingPrivateTypingTimeoutsRef.current[conversationUser.id]) {
           clearTimeout(incomingPrivateTypingTimeoutsRef.current[conversationUser.id])
@@ -300,8 +311,6 @@ function Chat({ user, liveUsers, onRegisterLiveUser, onReplaceLiveUsers }) {
             return
           }
 
-          registerLiveUserByName(senderName)
-
           setGroupTypingUsers((currentTypingUsers) => (
             currentTypingUsers.includes(senderName)
               ? currentTypingUsers
@@ -324,7 +333,6 @@ function Chat({ user, liveUsers, onRegisterLiveUser, onReplaceLiveUsers }) {
         }
 
         const message = normalizeGroupMessage(socketMessage, currentUser.name)
-        registerLiveUserByName(message.senderName)
 
         if (incomingGroupTypingTimeoutsRef.current[message.senderName]) {
           clearTimeout(incomingGroupTypingTimeoutsRef.current[message.senderName])
@@ -350,7 +358,12 @@ function Chat({ user, liveUsers, onRegisterLiveUser, onReplaceLiveUsers }) {
       },
     )
 
+    const onlineUsersInterval = window.setInterval(syncOnlineUsers, 3000)
+    window.addEventListener('focus', syncOnlineUsers)
+
     return () => {
+      window.clearInterval(onlineUsersInterval)
+      window.removeEventListener('focus', syncOnlineUsers)
       disconnectSocket()
     }
   }, [currentUser.name])
@@ -435,16 +448,13 @@ function Chat({ user, liveUsers, onRegisterLiveUser, onReplaceLiveUsers }) {
       return
     }
 
-    const chatUser = createChatUser(trimmedUsername)
-    registerLiveUserByName(trimmedUsername)
-    setActiveChatType('private')
-    setUsers((currentUsers) => {
-      if (currentUsers.some((userItem) => userItem.id === chatUser.id)) {
-        return currentUsers
-      }
+    const chatUser = users.find((userItem) => userItem.name.trim().toLowerCase() === trimmedUsername.toLowerCase())
 
-      return [...currentUsers, chatUser]
-    })
+    if (!chatUser) {
+      return
+    }
+
+    setActiveChatType('private')
     setActiveUserId(chatUser.id)
     setUnreadByUser((currentUnread) => ({
       ...currentUnread,

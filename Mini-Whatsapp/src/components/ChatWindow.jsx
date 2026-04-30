@@ -58,6 +58,7 @@ export function ChatWindow({
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false)
   const feedRef = useRef(null)
   const emojiPickerRef = useRef(null)
+  const draftInputRef = useRef(null)
 
   useEffect(() => {
     feedRef.current?.scrollTo({
@@ -76,6 +77,17 @@ export function ChatWindow({
     document.addEventListener('mousedown', handlePointerDown)
     return () => document.removeEventListener('mousedown', handlePointerDown)
   }, [])
+
+  useEffect(() => {
+    const draftInput = draftInputRef.current
+
+    if (!draftInput) {
+      return
+    }
+
+    draftInput.style.height = '0px'
+    draftInput.style.height = `${draftInput.scrollHeight}px`
+  }, [draft])
 
   function updateDraft(nextValue) {
     setDraft(nextValue)
@@ -106,6 +118,13 @@ export function ChatWindow({
     setDraft('')
     onDraftChange?.('')
     setIsEmojiPickerOpen(false)
+  }
+
+  function handleDraftKeyDown(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault()
+      event.currentTarget.form?.requestSubmit()
+    }
   }
 
   if (!chat) {
@@ -177,19 +196,18 @@ export function ChatWindow({
             ))}
           </div>
         </div>
-        <input
+        <textarea
+          ref={draftInputRef}
           aria-label="Message"
+          className="message-composer-input"
           placeholder={chat.type === 'group' ? 'Type a group message...' : 'Type a message...'}
           value={draft}
+          rows={1}
           onChange={(event) => {
             updateDraft(event.target.value)
           }}
+          onKeyDown={handleDraftKeyDown}
         />
-        <button className="composer-icon" type="button" aria-label="Attach file">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M7.4 18.6a5 5 0 0 1 0-7.1l6.6-6.6a3.6 3.6 0 1 1 5.1 5.1l-7.4 7.4a2.3 2.3 0 1 1-3.2-3.2l6.8-6.8 1.4 1.4-6.8 6.8a.3.3 0 0 0 .4.4l7.4-7.4a1.6 1.6 0 0 0-2.3-2.3l-6.6 6.6a3 3 0 1 0 4.2 4.2l6.3-6.3 1.4 1.4-6.3 6.3a5 5 0 0 1-7 0Z" />
-          </svg>
-        </button>
         <button className="send-button" type="submit" aria-label="Send message">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M3.8 20.2 21 12 3.8 3.8 3 10.2l10 1.8-10 1.8.8 6.4Z" />
